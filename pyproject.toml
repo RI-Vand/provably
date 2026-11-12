@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "provably-mcp"
-version = "0.1.0"
-description = "A local MCP server that scans AI-written web apps for vulnerabilities, fixes them, and checks their business rules. Nothing leaves your machine."
+version = "0.1.1"
+description = "Makes vibe-coded apps way harder to hack: a local MCP server that finds and fixes vulnerabilities as Claude writes the code, attacks your business logic, and guards with formally verified code. Nothing leaves your machine."
 readme = "README.md"
 requires-python = ">=3.10"
 license = "FSL-1.1-ALv2"

@@ -17,7 +17,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import audit, bizspec, harden_core
 from protocol import PROTOCOL
 
-VERSION = "0.1.0"
+VERSION = "0.1.1"
 MAX_CODE = 2_000_000                              # characters accepted in one call
 _RO = {"readOnlyHint": True, "destructiveHint": False, "idempotentHint": True, "openWorldHint": False}
 

@@ -1,9 +1,12 @@
 # Provably
 
-**Provably automatically fixes the common vulnerabilities in AI-written Python apps, and the core access-control decisions are formally verified.**
+**Vibe-coded apps ship with the same holes every time. Provably closes them while Claude writes the code, so your app is way harder to hack.**
 
-It is a local [MCP](https://modelcontextprotocol.io) server for Claude. While it is connected, Claude is told how to build a web app safely, and can call Provably to scan the code it just wrote,
-rewrite the dangerous spots, and check the app's own business rules (who may see what, money that must never go negative, coupons that may be used once).
+Connect it once and Claude builds like a security engineer. It writes your app, Provably tears into the code, rewrites the dangerous spots into the safe form, re-scans, and then checks your app's own business rules: who can see whose data, money that must never go negative, coupons that must only work once. Claude keeps looping until the findings are gone.
+
+The part that matters most: the decisions that guard your app (who may open a record, where a redirect may go, what a command may receive, which files a request may touch, how many attempts a client gets, whether a payment adds up, whether a one-time token was already used) are not just tested. They run on code that was **formally proved correct with Dafny**, and your app refuses to start if that code is tampered with.
+
+It is a local [MCP](https://modelcontextprotocol.io) server for Claude. Free, fast, and your code never leaves your machine.
 
 - **Local.** It runs on your machine. The server makes no network requests and keeps no database, log, history or bytecode cache. It reads the code Claude sends it and runs none of it.
 - **Source-available.** Free to use, read and modify under the [Functional Source License](#license). It is not an OSI open-source license: you may not use it to offer a competing product.
@@ -39,7 +42,7 @@ Or paste this to Claude Code and let it do it:
 
 If Claude Desktop cannot find `uvx`, put the full path to it in `"command"` (`which uvx` on macOS/Linux, `where uvx` on Windows).
 
-Updates are automatic: the command follows the `stable` branch and `--refresh` makes `uvx` fetch the latest release each time the server starts, so nobody has to reinstall. It needs a network connection at start; each release is also tagged (for example `v0.1.0`), so you can pin a specific version by replacing `@stable` with that tag and removing `--refresh`.
+Updates are automatic: the command follows the `stable` branch and `--refresh` makes `uvx` fetch the latest release each time the server starts, so nobody has to reinstall. It needs a network connection at start; each release is also tagged (for example `v0.1.1`), so you can pin a specific version by replacing `@stable` with that tag and removing `--refresh`.
 
 ## Tools
 
@@ -58,12 +61,11 @@ None of them runs your code. Command line, no Claude needed: `uvx --refresh --fr
 The decisions behind the fixes (who may open a record, where a redirect may go, what a command argument may be, which fields a route accepts, how many attempts a client gets, whether a file path stays in its folder,
 which routes each role may reach, which workflow steps are allowed, whether a money transfer conserves value, whether a one-time token was already used) are made by code that was formally proved correct with
 [Dafny](https://dafny.org) and compiled to Python (`verified_core/`). The app refuses to start if that code is altered. `VERIFICATION.md` states what is proved, what the proofs rely on, and what is **not** proved
-(for example: business rules nobody declared). The proofs themselves are not part of this repository. Provably does not make an app "unhackable".
+(for example: business rules nobody declared). The proofs themselves are not part of this repository. No tool makes an app unhackable, and Provably does not claim to: it takes the cheap, common, automated attacks off the table and puts proved guards on the ones that hurt most.
 
-## What it will not do
+## Where the edges are
 
-Fix weak password hashing (that needs a data migration), decide your business rules for you, scan your dependencies, or protect an app while it is running. Findings it cannot fix safely are returned
-as `review` items with an exact instruction.
+Provably goes deep on your app's code, and it is straight about what is outside it: your hosting, your dependencies, phishing and social engineering. It will not rewrite weak password hashing on its own (that needs a data migration), it cannot guess business rules nobody declared, and it does not guard an app while it runs. Anything it cannot fix safely comes back as a `review` item with the exact instruction. A clean scan means it found nothing, and the proved core means the guards themselves are not the weak link.
 
 ## License
 

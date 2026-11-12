@@ -1,0 +1,3 @@
+# Keep every file exactly as committed (LF). verified_core/ is integrity-checked at start-up by its SHA-256, so a CRLF checkout (Windows core.autocrlf) would make hardened apps refuse to start.
+* text=auto eol=lf
+verified_core/** -text

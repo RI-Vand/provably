@@ -132,6 +132,7 @@ def main(argv=None):
                     shutil.copy(HERE / "provably_secure.py", out.parent / "provably_secure.py")
                 if not (out.parent / "verified_core").exists():           # the verified code the helpers run on; the app refuses to start without it
                     shutil.copytree(HERE / "verified_core", out.parent / "verified_core", ignore=shutil.ignore_patterns("__pycache__"))
+                    (out.parent / "verified_core" / ".gitattributes").write_text("# keep these files byte-for-byte: they are integrity-checked at start-up, and a CRLF checkout on Windows would make the app refuse to start\n* -text\n", encoding="utf-8", newline="\n")   # _keep_bytes
             print(f"  wrote {out}")
         ok = ok and r["passed"]
     return 0 if ok else 1
