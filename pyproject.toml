@@ -1,0 +1,45 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "provably-mcp"
+version = "0.1.0"
+description = "A local MCP server that scans AI-written web apps for vulnerabilities, fixes them, and checks their business rules. Nothing leaves your machine."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "FSL-1.1-ALv2"
+license-files = ["LICENSE", "NOTICE", "THIRD_PARTY_NOTICES.md"]
+keywords = ["mcp", "claude", "security", "vulnerabilities", "formal-verification"]
+classifiers = ["Development Status :: 4 - Beta", "Intended Audience :: Developers", "Topic :: Security", "Programming Language :: Python :: 3"]
+dependencies = []                      # the server and the scanner use only the standard library
+
+[project.optional-dependencies]
+test = ["flask>=3"]                    # only for the tests
+
+[project.scripts]
+provably-mcp = "provably_mcp.cli:main"
+provably-harden = "provably_mcp.cli:harden_main"
+
+[project.urls]
+Source = "https://github.com/rishivandavasi-byte/provably"
+
+# The repository root is flat (clone and run). The wheel puts the same files inside one package, so installing never adds generic top-level names such as `audit` to an environment.
+[tool.hatch.build.targets.wheel]
+packages = ["provably_mcp"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"mcp_server.py" = "provably_mcp/mcp_server.py"
+"harden.py" = "provably_mcp/harden.py"
+"harden_core.py" = "provably_mcp/harden_core.py"
+"audit.py" = "provably_mcp/audit.py"
+"fixer.py" = "provably_mcp/fixer.py"
+"bizspec.py" = "provably_mcp/bizspec.py"
+"webstack.py" = "provably_mcp/webstack.py"
+"protocol.py" = "provably_mcp/protocol.py"
+"provably_secure.py" = "provably_mcp/provably_secure.py"
+"verified_core" = "provably_mcp/verified_core"
+
+[tool.hatch.build.targets.sdist]
+include = ["provably_mcp", "*.py", "verified_core", "README.md", "LICENSE", "NOTICE", "THIRD_PARTY_NOTICES.md", "VERIFICATION.md", "CHANGELOG.md", "SECURITY.md", "CONTRIBUTING.md"]
+exclude = ["**/__pycache__"]

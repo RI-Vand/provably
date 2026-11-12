@@ -1,0 +1,35 @@
+{
+ "dafny_version": "4.11.0",
+ "verified_obligations": 27,
+ "errors": 0,
+ "sources": {
+  "pathtrav": "5049a626e0164765b2407894bd81a949473e2dce4ee6e4aa4baae04d8794a332",
+  "redirect": "8ebcac5f7328541a300955bfc1feaf095f80416f91a18a1102a4f5b5e3a284e0",
+  "idor": "d94dc73743654e16a8c17e767c5e761f4d2f3f0efa11d36b9524907f97d782df",
+  "cmdi": "6823ca3e189454fa12bfc8fce2d8cf4345b24603fa193cdb4ed17a972d7d617e",
+  "strictparams": "b5932d55d5dc00ea2bf39620f4795e46b97d340d228c50853e676f0a04d89045",
+  "ratelimit": "61e9627cb313a72eb9f5d5d2b22a57614926faeba83603025f6d6d8feb4a6fef",
+  "authz": "c0f99cd8855094909d9b925ca2968f3c22132a3e437e8b18aa854b5239d96471",
+  "statemachine": "d46748f02d2363a2b7e17b2e2434570aa0ae96ce33c921263c7ef71be9a773da",
+  "ledger": "3c7b816fd53b4c0fdba343dbd862f3d4ba03757f50dc45a9cb7bb9f6b5c35d4f",
+  "singleuse": "9053cd0890f4371b78e0361c17fe658763e5861d4190fbafeb6f38f56d6afe2d"
+ },
+ "core_dfy": "3090e7a8f4bdb7f2ddf860fa76e15fa12a1855d3a871b12fdf31a43ae0b5b3d4",
+ "generated": {
+  "Authz.py": "6fd3ec0b20a3cded15d121c1119eeef5ce2739aec5b4b74bc7d18e912e1d50d6",
+  "Cmdi.py": "488598899f628787222071c883457b195b971eda872a6462c96dbb03447d734d",
+  "Idor.py": "6a48f8153ba1aea4826fb64c1dbc86cda0594a3211541f94a03e2a79e57d7df6",
+  "Ledger.py": "e0d91c8a6812f5879223fdbe16c3f6e7276465a8efc141b39f6135ebecc31f70",
+  "PathTrav.py": "d16438a5e3c208b44e85bed3c7a90800269aa75b5c840aebd4c64a6bbb60afbc",
+  "RateLimit.py": "f4ed27e51bb2e9673eb64b3a385ac6f1f51ae2533c28e46064847636b08cf880",
+  "Redirect.py": "7009237b2a2d228056604ffaab376c4a7f328387fa0d142000b8617a99f07c8a",
+  "SingleUse.py": "be280fc4ec4b150016c481c7b113a405fbe27f15aefa96a30b3bd0af38b54200",
+  "StateMachine.py": "1acb39954a50d2b4035f33e67cc072bda768e4ca3e2d6bccce9b51e4abeec10f",
+  "StrictParams.py": "da3b47135d7cd11ed29e64248c2abdee17512609a386ab2a32872d2d6001130f",
+  "System_/__init__.py": "96b6e33c036bc3aeab6d1810c7aef085184d09c407bdec032ea89d7a98843edf",
+  "__main__.py": "b4505b5f47e4875121b3518be9b3006ef9053e86ac602648f36c76e9febf5928",
+  "_dafny/__init__.py": "18d39decdedad0e188456e15d17f1dcd5113c4abc258ad6cb718e39534555e7a",
+  "module_.py": "3c031770f411d7e180d951286192492cbfc848128a4611d5293c9dfbdff0755b"
+ },
+ "built_utc": "2026-11-06T12:55:52Z"
+}
