@@ -1,6 +1,6 @@
 # Provably
 
-**Vibe-coded apps ship with the same holes every time. Provably automatically fixes many common web security patterns while Claude writes code, and flags the rest for review.**
+**Vibe-coded apps ship with the same holes every time. Provably automatically fixes many common web security patterns while Claude writes code, and flags the rest for review—and makes your app way harder to hack.**
 
 Connect it once and Claude builds with a security workflow. It writes your app, Provably scans the code, rewrites dangerous spots into safer forms where possible, re-scans, and then checks your app's own business rules: who can see whose data, money that must never go negative, coupons that must only work once. Claude keeps looping until findings are addressed.
 
