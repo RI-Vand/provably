@@ -12,6 +12,16 @@ It is a local [MCP](https://modelcontextprotocol.io) server for Claude. Free, fa
 - **Source-available.** Free to use, read and modify under the [Functional Source License](#license). It is not an OSI open-source license: you may not use it to offer a competing product.
 - **Scope: the code.** Provably works on your app's source. It does not cover phishing, social engineering, your hosting, or your dependencies.
 
+## Give Provably to Claude
+
+Copy the repository link and give it to Claude:
+
+https://github.com/RI-Vand/provably
+
+Then ask Claude:
+
+> Install Provably from this repository and configure it for me. Make sure it stays updated automatically as new improvements are released. After installing, verify that Provably is connected and working.
+
 ## Install (one command)
 
 You need [uv](https://docs.astral.sh/uv/) (it fetches the right Python by itself; Provably needs 3.10 or newer).
