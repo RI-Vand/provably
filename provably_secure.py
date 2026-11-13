@@ -15,7 +15,7 @@ def _load_core():
     try:
         manifest = json.load(open(os.path.join(d, "MANIFEST.json")))
         for rel, want in manifest["generated"].items():
-            if hashlib.sha256(open(os.path.join(d, rel), "rb").read()).hexdigest() != want:
+            if not hmac.compare_digest(hashlib.sha256(open(os.path.join(d, rel), "rb").read()).hexdigest(), str(want)):
                 raise RuntimeError("verified_core/%s does not match its manifest" % rel)
         ikey = os.environ.get("PROVABLY_INTEGRITY_KEY")
         if ikey:    # the manifest is only a self-description; with a key that is NOT stored next to the code, someone who can write files cannot re-sign it
@@ -856,9 +856,12 @@ def clean_header(value):
     return re.sub(r"[\r\n\x00]", "", str(value))
 
 
+_MAX_ARCHIVE_MEMBER = 100 * 1024 * 1024
+
+
 def safe_extract(archive, dest):
     """Extract a ZipFile/TarFile with every member path pinned inside dest (zip-slip) and no links/devices. Verified safe_join decides containment."""
-    import zipfile
+    import tarfile, zipfile
     os.makedirs(dest, exist_ok=True)
     _EXTRA_WRITE_ROOTS.add(os.path.realpath(dest))
     if isinstance(archive, zipfile.ZipFile):
@@ -868,14 +871,25 @@ def safe_extract(archive, dest):
                 os.makedirs(target, exist_ok=True)
                 continue
             os.makedirs(os.path.dirname(target), exist_ok=True)
+            if m.file_size > _MAX_ARCHIVE_MEMBER:
+                raise ValueError("archive member too large")
             with archive.open(m) as src, open(target, "wb") as out:
-                out.write(src.read(100 * 1024 * 1024 + 1)[:100 * 1024 * 1024])
+                data = src.read(_MAX_ARCHIVE_MEMBER + 1)
+                if len(data) > _MAX_ARCHIVE_MEMBER:     # header lied about the size
+                    raise ValueError("archive member too large")
+                out.write(data)
         return
     for m in archive.getmembers():
         if m.issym() or m.islnk() or m.isdev():
             raise ValueError("link or device in archive")
         safe_join(dest, m.name)
-    archive.extractall(dest, filter="data") if sys.version_info >= (3, 12) else archive.extractall(dest)
+    for m in archive.getmembers():
+        if m.size > _MAX_ARCHIVE_MEMBER:
+            raise ValueError("archive member too large")
+    if hasattr(tarfile, "data_filter"):     # 3.12+, and the security backports to 3.8-3.11
+        archive.extractall(dest, filter="data")
+    else:                                   # old interpreter without the filter: members were already checked above (safe_join, no links/devices, size cap)
+        archive.extractall(dest)
 
 
 # ==== defence in depth ==========================================================================================================================

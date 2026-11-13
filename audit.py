@@ -766,6 +766,33 @@ class Analyzer:
                 self._probe = None
                 self.findings = saved
 
+    def policy_roles(self, f):
+        """Union of roles that a literal policy_gate(app, {"METHOD /rule": [roles]}) declares for this route, or None when the route is not fully covered
+        (an undeclared method/path, a non-literal policy, or no policy at all). Only a literal dict is trusted; anything dynamic is left to the other checks."""
+        pol = getattr(self, "_policy", None)
+        if pol is None:
+            pol = {}
+            for n in ast.walk(self.tree):
+                if isinstance(n, ast.Call) and last(dotted(n.func)) == "policy_gate" and len(n.args) >= 2 and isinstance(n.args[1], ast.Dict):
+                    for k, v in zip(n.args[1].keys, n.args[1].values):
+                        if const_str(k) and isinstance(v, (ast.List, ast.Tuple, ast.Set)) and all(const_str(e) for e in v.elts):
+                            pol.setdefault(k.value, set()).update(e.value for e in v.elts)
+                        else:
+                            pol = {}; break
+            self._policy = pol
+        if not pol or not f.is_route:
+            return None
+        paths = [d.args[0].value for d in f.node.decorator_list if isinstance(d, ast.Call) and d.args and const_str(d.args[0])]
+        methods = f.methods - {"ROUTE"} or {"GET"}
+        roles = set()
+        for path in paths:
+            for m in methods:
+                r = pol.get(m + " " + path)
+                if r is None:
+                    return None
+                roles |= r
+        return roles or None
+
     def logic_checks(self, f):
         src = ast.unparse(f.node)
         name_l = f.name.lower()
@@ -775,6 +802,9 @@ class Analyzer:
                 route_paths.append(d.args[0].value.lower())
         path_text = " ".join(route_paths)
         has_auth = bool(AUTH_WORDS.search(f.deco_text) or AUTH_WORDS.search(src))
+        declared = self.policy_roles(f)      # roles a module-level policy_gate(app, {...}) allows for EVERY method+path of this route, or None
+        if declared is not None and "anon" not in declared:
+            has_auth = True                  # default-deny policy refuses anonymous callers before the route runs
         if f.is_route and f.state_changing and not has_auth and not re.search(r"login|signin|register|signup|token|webhook|health|callback|public", name_l + path_text):
             self.add("authn", f.node, f"{f.name}() changes data but nothing checks who is calling", "medium")
         if f.is_route and not f.state_changing and not has_auth and not re.search(r"login|signin|register|signup|token|webhook|health|callback|public|static", name_l + path_text) \
@@ -796,7 +826,9 @@ class Analyzer:
         if f.is_route:
             id_params = [p for p in f.params if re.search(r"(^id$|_id$|^uid$|^pk$|^uuid$|^slug$|^key$|^i$|^n$|^num$|^oid$|^rid$|^ident$|^item$)", p)]
             used = [p for p in id_params if re.search(rf"(\.get\(\s*{p}\b|\(\s*{p}\s*,\s*\)|id\s*=\s*{p}\b|\.get_or_404\(\s*{p}\b|\[\s*{p}\s*\]|WHERE\s+\w*id\w*\s*=.*{p}|filter_by\(\s*\w*id\w*\s*=\s*{p}|find_one\(.*{p}|objects\.get\(.*{p}|\.query\.get\(\s*{p})", src)]
-            if used and not re.search(r"current_user|session\[|g\.user|request\.user|user_id\s*==|owner|\.user\s*==|policy|authorized|authorize|can_access|has_permission|capability|shield", src, re.I):
+            if used and declared is not None and declared <= {"admin"}:
+                used = []                    # admin-only by declared policy: there is no "someone else's record" for an admin
+            if used and not re.search(r"current_user|session\[|g\.user|request\.user|user_id\s*==|owner|\.user\s*==|scoped_execute|policy|authorized|authorize|can_access|has_permission|capability|shield", src, re.I):
                 self.add("idor", f.node, f"{f.name}() loads a record by {used[0]} without checking it belongs to the caller", "medium")
             req_id = re.search(r"request\.(?:args|form|values|json)\s*\[\s*['\"](?:id|user_id|uid|account_id|owner_id|pk)['\"]\s*\]|request\.(?:args|form|values)\.get\(\s*['\"](?:id|user_id|uid|account_id|owner_id|pk)['\"]", src)
             if req_id and re.search(r"\b(from|join|into|update)\s+[\"'`]?(users?|accounts?|profiles?|members?|customers?)\b", src, re.I) \

@@ -60,8 +60,26 @@ def collect(target):
     skip = {".git", "node_modules", "venv", ".venv", "__pycache__", "build", "dist"}
     if t.is_file():
         return [t]
+    ignored = _ignore_patterns(t)
     return [p for p in t.rglob("*") if p.is_file() and p.suffix in (".py", ".js", ".jsx", ".ts", ".tsx", ".mjs") and not (skip & set(p.parts))
-            and ".hardened" not in p.name and p.name not in ("provably_secure.py", "audit.py")]
+            and ".hardened" not in p.name and p.name not in ("provably_secure.py", "audit.py") and not _is_ignored(p, t, ignored)]
+
+
+def _ignore_patterns(root):
+    """`.provablyignore` at the root of the folder being hardened: one glob per line (# comments allowed), matched against the path relative to that root.
+    For files that are insecure ON PURPOSE (test harnesses, red-team canaries) so the rewriter leaves them alone. It is read only here, by the command-line
+    hardener, never by the scanner: code being scanned cannot ask to be skipped."""
+    try:
+        lines = (root / ".provablyignore").read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return []
+    return [l.strip() for l in lines if l.strip() and not l.strip().startswith("#")]
+
+
+def _is_ignored(path, root, patterns):
+    import fnmatch
+    rel = path.relative_to(root).as_posix()
+    return any(fnmatch.fnmatch(rel, g) or fnmatch.fnmatch(path.name, g) for g in patterns)
 
 
 WEB_EXT = (".js", ".jsx", ".ts", ".tsx", ".mjs", ".cjs", ".sql", ".rules", ".json", ".yml", ".yaml", ".toml")

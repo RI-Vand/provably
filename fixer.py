@@ -5,6 +5,7 @@ import ast, re, shlex
 
 MARK = re.compile("\ue000(\\d+)\ue001")
 IDENT_KW = {"FROM", "INTO", "TABLE", "JOIN", "UPDATE", "BY", "SET", "IN", "AS", "ON", "LIMIT", "OFFSET"}
+NO_PLACEHOLDER_SQL = ("PRAGMA", "DROP", "CREATE", "ALTER", "ATTACH", "DETACH", "VACUUM", "REINDEX")   # statements that cannot take bound parameters
 SHELL_META = re.compile(r"[|;&<>$`(){}*?~\n\\]")
 
 
@@ -157,6 +158,17 @@ class Fixer:
         self.review.append({"rule": rule, "line": line, "action": why})
 
     # ---- fixes ---------------------------------------------------------------------------------------------------------
+    @staticmethod
+    def fixed_choice(src):
+        """True when the interpolated expression is a string literal or a conditional between string literals (e.g. "ASC" if x else "DESC")."""
+        try:
+            node = ast.parse(src.strip(), mode="eval").body
+        except SyntaxError:
+            return False
+        def ok(n):
+            return (isinstance(n, ast.Constant) and isinstance(n.value, str)) or (isinstance(n, ast.IfExp) and ok(n.body) and ok(n.orelse))
+        return ok(node)
+
     def sqli(self, f):
         for call in self.at(f["line"], ast.Call):
             if not (isinstance(call.func, ast.Attribute) and call.func.attr in ("execute", "executemany", "executescript", "raw")) or len(call.args) != 1:
@@ -173,6 +185,13 @@ class Fixer:
             if not ps or not any(k == "e" for k, _ in ps):
                 continue
             ps = [list(p) for p in ps]
+            head = "".join(v for k, v in ps if k == "c").lstrip().upper()
+            if head.startswith(NO_PLACEHOLDER_SQL):      # DDL, PRAGMA, ATTACH...: the database refuses placeholders here, so a rewrite would produce invalid SQL
+                self.skip("sqli", f["line"], "This statement type cannot take placeholders: check every variable in it against a fixed allow-list (or a strict identifier pattern).")
+                return
+            if all(k == "c" or self.fixed_choice(v) for k, v in ps):      # every interpolated piece is one of a few string literals: nothing the caller controls
+                self.skip("sqli", f["line"], "Every interpolated piece is a fixed string chosen in code, not input: nothing to parameterise.")
+                return
             sql, params = "", []
             for i, (k, v) in enumerate(ps):
                 if k == "c":
@@ -774,10 +793,27 @@ class Fixer:
             except SyntaxError:
                 self.skip(rule, line, "Automatic rewrite was unsafe here; apply the fix by hand.")
                 continue
+            if self.makes_worse(text, trial):
+                self.skip(rule, line, "Automatic rewrite would introduce a new finding; apply the fix by hand.")
+                continue
             applied.append({"rule": rule, "line": line, "desc": desc, "before": text[a:b], "after": new})
             text = trial
         text = self.add_imports(text) if applied else text
         return text, sorted(applied, key=lambda x: x["line"]), self.review, self.env_required
+
+    @staticmethod
+    def makes_worse(before, after):
+        """Safety net: an edit is kept only if re-scanning the result shows no rule with MORE findings than before it. The scan is the same one that
+        found the problem, so a rewrite that trades one finding for another (or leaves the same one in place plus a new one) goes back to the person as a
+        review item instead of into their code. If the scan itself cannot run, the edit is kept: the syntax check above still applies."""
+        try:
+            import audit
+            from collections import Counter
+            was = Counter(f["rule"] for f in audit.audit_python(before, "<fix>"))
+            now = Counter(f["rule"] for f in audit.audit_python(after, "<fix>"))
+        except Exception:
+            return False
+        return any(now[r] > was[r] for r in now)
 
     def add_imports(self, text):
         tree = ast.parse(text)
